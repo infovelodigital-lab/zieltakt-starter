@@ -140,6 +140,18 @@ const site = defineCollection({
 			privacyHref: z.string(),
 			legal: z.array(link),
 
+			/** Required for the Impressum (TMG §5) and Datenschutzerklärung (DSGVO) pages. */
+			legalEntity: z.object({
+				/** Inhaber:in / Geschäftsführer:in — the natural person legally responsible. */
+				responsiblePerson: z.string(),
+				legalForm: z.string().optional(),
+				registerCourt: z.string().optional(),
+				registerNumber: z.string().optional(),
+				vatId: z.string().optional(),
+				/** Only for regulated trades (Handwerk, Heilberufe, etc.). */
+				supervisoryAuthority: z.string().optional(),
+			}),
+
 			consent: z
 				.object({
 					version: z.string().default("1"),

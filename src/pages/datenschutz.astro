@@ -1,0 +1,174 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+
+const entry = await getEntry("site", "business");
+if (!entry) throw new Error("src/content/business.yaml needs a top-level `business:` key.");
+const business = entry.data;
+
+const consentCategories = business.consent?.categories ?? [];
+const le = business.legalEntity;
+const fullAddress = `${business.address.street}, ${business.address.postalCode} ${business.address.city}`;
+const usesContactForm = Boolean(business.contact?.formAction);
+const usesMaps = Boolean(business.mapsUrl);
+---
+
+<BaseLayout
+	title="Datenschutzerklärung"
+	description={`Datenschutzerklärung von ${business.name}.`}
+	siteName={business.name}
+	lang={business.lang}
+>
+	<Navbar brandName={business.name} links={business.nav.links} cta={business.nav.cta} />
+
+	<main>
+		<section class="py-24 sm:py-32">
+			<div class="mx-auto max-w-3xl px-5 sm:px-8">
+				<h1 class="font-display text-[clamp(2.25rem,3vw+1.25rem,3.5rem)] leading-[1.02] font-medium tracking-[-0.02em] text-ink">
+					Datenschutzerklärung
+				</h1>
+
+				<div class="mt-12 space-y-10 leading-relaxed text-ink/80">
+					<section>
+						<h2 class="font-display text-xl font-medium text-ink">1. Verantwortlicher</h2>
+						<p class="mt-3">
+							Verantwortlich für die Datenverarbeitung auf dieser Website im Sinne der
+							Datenschutz-Grundverordnung (DSGVO) sowie, soweit anwendbar, des schweizerischen
+							Datenschutzgesetzes (DSG), ist:
+						</p>
+						<p class="mt-3">
+							{business.name}<br />
+							{le.responsiblePerson}<br />
+							{fullAddress}<br />
+							Telefon: {business.phone.display}<br />
+							{business.email && <>E-Mail: {business.email}</>}
+						</p>
+					</section>
+
+					<section>
+						<h2 class="font-display text-xl font-medium text-ink">2. Ihre Rechte</h2>
+						<p class="mt-3">Sie haben jederzeit das Recht:</p>
+						<ul class="mt-3 list-disc space-y-1 ps-5">
+							<li>Auskunft über die zu Ihrer Person gespeicherten Daten zu verlangen (Art. 15 DSGVO),</li>
+							<li>die Berichtigung unrichtiger Daten zu verlangen (Art. 16 DSGVO),</li>
+							<li>die Löschung Ihrer bei uns gespeicherten Daten zu verlangen (Art. 17 DSGVO),</li>
+							<li>die Einschränkung der Datenverarbeitung zu verlangen (Art. 18 DSGVO),</li>
+							<li>der Verarbeitung Ihrer Daten zu widersprechen (Art. 21 DSGVO),</li>
+							<li>Ihre Daten in einem übertragbaren Format zu erhalten (Art. 20 DSGVO),</li>
+							<li>
+								sich bei einer Aufsichtsbehörde zu beschweren — zuständig ist die Datenschutzbehörde Ihres
+								üblichen Aufenthaltsortes, Ihres Arbeitsplatzes oder unseres Unternehmenssitzes.
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2 class="font-display text-xl font-medium text-ink">3. Hosting und Server-Logfiles</h2>
+						<p class="mt-3">
+							Diese Website wird bei Cloudflare, Inc. gehostet. Beim Aufruf der Website erhebt der Hosting-Anbieter
+							automatisch Informationen in sogenannten Server-Logfiles, die Ihr Browser übermittelt (IP-Adresse,
+							Datum und Uhrzeit der Anfrage, Browsertyp, Betriebssystem, Referrer-URL). Diese Daten sind nicht
+							bestimmten Personen zuordenbar und werden ausschließlich zur Sicherstellung eines
+							störungsfreien Betriebs der Website sowie zur Verbesserung unseres Angebots ausgewertet
+							(Art. 6 Abs. 1 lit. f DSGVO).
+						</p>
+					</section>
+
+					{
+						usesContactForm && (
+							<section>
+								<h2 class="font-display text-xl font-medium text-ink">4. Kontaktformular</h2>
+								<p class="mt-3">
+									Wenn Sie uns über das Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem
+									Formular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage
+									und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht ohne Ihre
+									Einwilligung weiter. Die Verarbeitung dieser Daten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b
+									DSGVO, sofern Ihre Anfrage mit der Erfüllung eines Vertrags zusammenhängt oder zur Durchführung
+									vorvertraglicher Maßnahmen erforderlich ist. In allen übrigen Fällen beruht die Verarbeitung auf
+									unserem berechtigten Interesse an der effektiven Bearbeitung der an uns gerichteten Anfragen
+									(Art. 6 Abs. 1 lit. f DSGVO).
+								</p>
+							</section>
+						)
+					}
+
+					{
+						usesMaps && (
+							<section>
+								<h2 class="font-display text-xl font-medium text-ink">
+									{usesContactForm ? "5" : "4"}. Google Maps
+								</h2>
+								<p class="mt-3">
+									Auf dieser Website verlinken wir auf Google Maps, einen Kartendienst der Google Ireland
+									Limited. Die Karte wird erst nach Ihrem aktiven Klick geladen (Click-to-Load) — vor dem Klick
+									werden keine Daten an Google übertragen. Nach dem Laden kann Google Ihre IP-Adresse sowie
+									Standortdaten verarbeiten. Weitere Informationen entnehmen Sie der Datenschutzerklärung von
+									Google unter{" "}
+									<a
+										href="https://policies.google.com/privacy"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="underline decoration-ink/25 underline-offset-2 hover:decoration-ink"
+									>
+										policies.google.com/privacy
+									</a>
+									.
+								</p>
+							</section>
+						)
+					}
+
+					{
+						consentCategories.length > 0 && (
+							<section>
+								<h2 class="font-display text-xl font-medium text-ink">
+									{[usesContactForm, usesMaps].filter(Boolean).length + 4}. Cookies
+								</h2>
+								<p class="mt-3">
+									Diese Website verwendet Cookies bzw. ähnliche Speichertechnologien in folgenden Kategorien.
+									Mit Ausnahme technisch notwendiger Cookies erfolgt der Einsatz nur mit Ihrer Einwilligung
+									(Art. 6 Abs. 1 lit. a DSGVO), die Sie jederzeit über die Cookie-Einstellungen im Footer
+									widerrufen können.
+								</p>
+								<ul class="mt-3 list-disc space-y-1 ps-5">
+									{consentCategories.map((c) => (
+										<li>
+											<strong class="text-ink">{c.label}:</strong> {c.description}
+										</li>
+									))}
+								</ul>
+							</section>
+						)
+					}
+
+					<section>
+						<h2 class="font-display text-xl font-medium text-ink">
+							{[usesContactForm, usesMaps, consentCategories.length > 0].filter(Boolean).length + 4}. Änderungen
+							dieser Datenschutzerklärung
+						</h2>
+						<p class="mt-3">
+							Wir passen diese Datenschutzerklärung an, sobald Änderungen an unserer Datenverarbeitung dies
+							erforderlich machen. Die jeweils aktuelle Fassung finden Sie immer auf dieser Seite.
+						</p>
+					</section>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<Footer
+		brandName={business.name}
+		claim={business.footer.claim}
+		address={business.address}
+		phone={business.phone}
+		email={business.email}
+		hoursSummary={business.footer.hoursSummary}
+		links={business.nav.links}
+		legal={business.legal}
+		social={business.social}
+		credit={business.footer.credit}
+		cookieSettingsLabel={consentCategories.length > 0 ? business.consent?.settingsLabel : undefined}
+	/>
+</BaseLayout>

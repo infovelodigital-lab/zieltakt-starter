@@ -163,6 +163,14 @@ business:
     - { label: Impressum, href: /impressum }
     - { label: Datenschutz, href: /datenschutz }
 
+  legalEntity:
+    responsiblePerson: "[CLIENT LEGAL INFO NEEDED — Inhaber/Geschäftsführer Name]"
+    legalForm: Einzelunternehmen
+    vatId: ""
+    registerCourt: ""
+    registerNumber: ""
+    supervisoryAuthority: ""
+
   # Add categories only when the site actually loads third-party services
   # (analytics, maps embeds, booking widgets). No categories = no banner.
   consent:
