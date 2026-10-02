@@ -1,0 +1,170 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SAMPLE CLIENT — every value below is placeholder content for the template.
+# Replace all of it per client. Schema: src/content.config.ts
+#
+# Anything marked [CLIENT … NEEDED] must come from the client — never invent
+# reviews, ratings, photos or numbers.
+# ─────────────────────────────────────────────────────────────────────────────
+
+business:
+  name: Keller Haustechnik
+  lang: de-CH
+  schemaType: Plumber
+  seo:
+    title: Sanitär & Heizung in Zürich-Oerlikon
+    description: Familienbetrieb seit 1987 für Badsanierung, Boilerersatz, Heizungswartung und 24h-Notdienst in Oerlikon, Seebach und Affoltern.
+
+  phone:
+    display: 044 000 00 00
+    href: tel:+41440000000
+  email: info@example.ch
+  address:
+    street: Musterstrasse 12
+    postalCode: "8050"
+    city: Zürich
+    region: ZH
+    country: CH
+  mapsUrl: https://maps.google.com/?q=Musterstrasse+12,+8050+Zürich
+  areaServed: [Zürich-Oerlikon, Zürich-Seebach, Zürich-Affoltern, Wallisellen, Opfikon]
+  openingHours:
+    - days: Mo–Fr
+      dayOfWeek: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      opens: "07:00"
+      closes: "17:30"
+    - days: Sa
+      dayOfWeek: [Saturday]
+      opens: "08:00"
+      closes: "12:00"
+  priceRange: CHF 120–25'000
+  foundingYear: 1987
+  social: []
+
+  nav:
+    links:
+      - { label: Leistungen, href: "#leistungen" }
+      - { label: Preise, href: "#preise" }
+      - { label: FAQ, href: "#faq" }
+      - { label: Kontakt, href: "#kontakt" }
+    cta: { label: 044 000 00 00, href: tel:+41440000000 }
+
+  hero:
+    eyebrow: Sanitär & Heizung · Zürich-Oerlikon
+    headline: Rohrbruch um 22 Uhr? Wir sind in 45 Minuten da.
+    lede: Familienbetrieb seit 1987. Boilerersatz, Badsanierung und Heizungswartung für Oerlikon, Seebach und Affoltern — mit Festpreis vor Arbeitsbeginn.
+    cta: { label: Notdienst anrufen, href: tel:+41440000000 }
+    secondaryCta: { label: Offerte für Badsanierung, href: "#kontakt" }
+    facts:
+      - { value: "1987", label: gegründet }
+      - { value: "9", label: Monteure im Team }
+      - { value: 24/7, label: Notdienst }
+    imageBrief: "Hochformat: Monteur bei der Arbeit an einem Boiler, natürliches Licht, nicht gestellt."
+    badge: { value: 45 Min., label: durchschnittliche Anfahrt im Notdienst }
+
+  services:
+    eyebrow: Leistungen
+    heading: Was wir jeden Tag in Zürich-Nord machen
+    intro: Neun Monteure, zwei Servicewagen, ein Lager in Oerlikon — deshalb haben wir die meisten Ersatzteile schon dabei.
+    items:
+      - title: Badsanierung aus einer Hand
+        summary: Vom Rückbau bis zur letzten Silikonfuge — wir koordinieren Plattenleger, Elektriker und Schreiner. Sie haben einen Ansprechpartner.
+        includes:
+          - Vor-Ort-Aufnahme mit 3D-Planung
+          - Festpreis-Offerte innert 5 Arbeitstagen
+          - Staubschutz & tägliche Endreinigung
+          - 5 Jahre Garantie auf Installationen
+        price: ab CHF 18'500
+        duration: 10–15 Arbeitstage
+        href: "#kontakt"
+        imageBrief: "Querformat: fertig saniertes Bad eines Kunden, Tageslicht."
+      - title: Boilerersatz
+        summary: Alter Elektroboiler raus, Wärmepumpenboiler rein — inklusive Förderantrag beim Kanton Zürich.
+        price: ab CHF 4'200
+        duration: 1 Tag
+        href: "#kontakt"
+      - title: Heizungswartung
+        summary: Jährlicher Service für Gas-, Öl- und Wärmepumpenheizungen mit Messprotokoll.
+        price: CHF 290
+        duration: 2 Std.
+        href: "#preise"
+      - title: 24h-Notdienst
+        summary: Rohrbruch, verstopfter Abfluss, kein Warmwasser — Anfahrt in Oerlikon, Seebach und Affoltern in unter 45 Minuten.
+        price: Anfahrt CHF 120
+        href: tel:+41440000000
+
+  # Only real, attributable reviews. Remove this whole block if the client has none.
+  testimonials:
+    heading: Was Kunden sagen
+    rating:
+      value: "[x,x]"
+      scale: "5"
+      label: "[CLIENT RATING NEEDED] Anzahl Bewertungen auf Google"
+    items:
+      - quote: "[CLIENT REVIEW NEEDED] Längste echte Bewertung hier — Wortlaut unverändert übernehmen."
+        name: Vorname N.
+        context: Leistung, Quartier · Monat Jahr
+      - quote: "[CLIENT REVIEW NEEDED] Zweite echte Bewertung."
+        name: Vorname N.
+        context: Leistung, Quartier
+      - quote: "[CLIENT REVIEW NEEDED] Dritte echte Bewertung."
+        name: Vorname N.
+        context: Leistung, Quartier
+
+  pricing:
+    eyebrow: Preise
+    heading: Was es kostet, bevor wir anfangen
+    intro: Für Standardarbeiten gelten Fixpreise. Alles andere offerieren wir nach einer Besichtigung — kostenlos in Zürich-Nord.
+    note: Alle Preise in CHF inkl. 8,1 % MwSt. Anfahrt innerhalb Zürich-Nord inklusive.
+    cta: { label: Besichtigung vereinbaren, href: "#kontakt" }
+    groups:
+      - title: Service & Wartung
+        items:
+          - { name: Heizungswartung Gas/Öl, detail: "Inkl. Abgasmessung und Messprotokoll für die Gemeinde.", price: CHF 290 }
+          - { name: Wärmepumpe Jahresservice, price: CHF 340 }
+          - { name: Boiler entkalken, detail: "Bis 300 Liter, inkl. Anode prüfen.", price: CHF 260 }
+      - title: Notdienst
+        items:
+          - { name: Anfahrt Notdienst, price: CHF 120 }
+          - { name: Arbeitsstunde Mo–Fr 7–18 Uhr, price: CHF 128 }
+          - { name: "Arbeitsstunde Nacht, Wochenende, Feiertag", price: CHF 192 }
+
+  faq:
+    eyebrow: FAQ
+    heading: Was Kunden uns am Telefon fragen
+    aside:
+      text: Ihre Frage ist nicht dabei? Wir nehmen ab 7 Uhr ab.
+      cta: { label: 044 000 00 00, href: tel:+41440000000 }
+    items:
+      - question: Kommen Sie auch nach Wallisellen oder Opfikon?
+        answer: |-
+          Ja. Für Wallisellen, Opfikon und Rümlang berechnen wir pauschal CHF 30 zusätzliche Anfahrt.
+
+          Weiter entfernt arbeiten wir nur für bestehende Wartungskunden.
+      - question: Wie schnell bekomme ich eine Offerte für eine Badsanierung?
+        answer: Nach der Besichtigung innert 5 Arbeitstagen, mit Festpreis.
+      - question: Übernehmen Sie den Förderantrag für den Wärmepumpenboiler?
+        answer: Ja, das ist im Preis enthalten. Die Auszahlung durch den Kanton dauert erfahrungsgemäss 6–8 Wochen.
+
+  contact:
+    eyebrow: Kontakt
+    heading: Am schnellsten erreichen Sie uns telefonisch
+    intro: Für Offerten lieber per Formular — wir melden uns innert eines Arbeitstags.
+    note: Notdienst 24/7, auch an Feiertagen
+    # TODO per client: a form service URL or an on-demand route (src/pages/api/contact.ts). Doesn't exist yet.
+    formAction: /api/contact
+    services: [Notfall / Reparatur, Badsanierung, Boilerersatz, Heizungswartung, Etwas anderes]
+
+  footer:
+    claim: Sanitär und Heizung für Zürich-Nord. Familienbetrieb in Oerlikon seit 1987.
+    hoursSummary: Mo–Fr 7–17:30 · Notdienst 24/7
+    # credit: { label: "Website: ZielTakt", href: "https://…" }
+
+  privacyHref: /datenschutz
+  legal:
+    - { label: Impressum, href: /impressum }
+    - { label: Datenschutz, href: /datenschutz }
+
+  # Add categories only when the site actually loads third-party services
+  # (analytics, maps embeds, booking widgets). No categories = no banner.
+  consent:
+    version: "1"
+    categories: []

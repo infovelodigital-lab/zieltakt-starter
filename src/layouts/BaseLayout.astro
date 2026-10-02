@@ -1,0 +1,115 @@
+---
+import "../styles/global.css";
+
+// Preload only the fonts every page needs above the fold. Imported with ?url so the
+// hashed filenames match the ones Vite emits for the @font-face rules in fonts.css.
+import displayFont from "../styles/fonts/fraunces-latin-wght.woff2?url";
+import bodyFont from "../styles/fonts/instrument-sans-latin-wght.woff2?url";
+import arabicFont from "../styles/fonts/ibm-plex-sans-arabic-400.woff2?url";
+
+type JsonLd = Record<string, unknown>;
+
+interface Props {
+	/** Page title, without the site name. */
+	title: string;
+	description: string;
+	/** Site/business name appended to the title. Pass it from src/content/business.yaml. */
+	siteName?: string;
+	/** BCP 47 tag, e.g. "de", "de-CH", "ar". Falls back to the i18n locale, then "de". */
+	lang?: string;
+	/** Absolute URL or site-relative path (e.g. "/og/home.jpg"), ideally 1200×630. */
+	image?: string;
+	imageAlt?: string;
+	/** Overrides the canonical URL. Defaults to the current path on Astro.site. */
+	canonical?: string;
+	ogType?: "website" | "article" | "profile";
+	noindex?: boolean;
+	/**
+	 * schema.org JSON-LD. Placeholder until the LocalBusiness builder reads
+	 * src/content/business.yaml — pages should pass its output here, never hand-written objects.
+	 */
+	jsonLd?: JsonLd | JsonLd[];
+}
+
+const {
+	title,
+	description,
+	siteName,
+	lang = Astro.currentLocale ?? "de",
+	image,
+	imageAlt,
+	canonical,
+	ogType = "website",
+	noindex = false,
+	jsonLd,
+} = Astro.props;
+
+const RTL_LANGUAGES = new Set(["ar", "fa", "he", "ur"]);
+const baseLang = lang.split("-")[0].toLowerCase();
+const dir = RTL_LANGUAGES.has(baseLang) ? "rtl" : "ltr";
+
+// Open Graph wants ll_CC. Bare language tags get the most likely region for our clients.
+const OG_LOCALE_DEFAULTS: Record<string, string> = {
+	de: "de_DE",
+	fr: "fr_FR",
+	it: "it_IT",
+	en: "en_US",
+	ar: "ar_AR",
+};
+const ogLocale = lang.includes("-")
+	? lang.replace("-", "_")
+	: (OG_LOCALE_DEFAULTS[baseLang] ?? baseLang);
+
+const siteUrl = Astro.site ?? Astro.url;
+const canonicalUrl = new URL(canonical ?? Astro.url.pathname, siteUrl).href;
+const imageUrl = image ? new URL(image, siteUrl).href : undefined;
+const fullTitle = siteName && siteName !== title ? `${title} | ${siteName}` : title;
+
+// Escape "<" so content from business.yaml can't close the script tag early.
+const jsonLdBlocks = (jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []).map((block) =>
+	JSON.stringify(block).replace(/</g, "\\u003c"),
+);
+---
+
+<!doctype html>
+<html lang={lang} dir={dir}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{fullTitle}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonicalUrl} />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
+		<meta name="generator" content={Astro.generator} />
+
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+
+		<link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href={bodyFont} as="font" type="font/woff2" crossorigin />
+		{dir === "rtl" && <link rel="preload" href={arabicFont} as="font" type="font/woff2" crossorigin />}
+
+		<!-- Open Graph -->
+		<meta property="og:type" content={ogType} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonicalUrl} />
+		<meta property="og:locale" content={ogLocale} />
+		{siteName && <meta property="og:site_name" content={siteName} />}
+		{imageUrl && <meta property="og:image" content={imageUrl} />}
+		{imageUrl && imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+
+		<!-- Twitter / X -->
+		<meta name="twitter:card" content={imageUrl ? "summary_large_image" : "summary"} />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+
+		{jsonLdBlocks.map((block) => <script type="application/ld+json" is:inline set:html={block} />)}
+
+		<slot name="head" />
+	</head>
+	<body class="bg-paper text-ink antialiased">
+		<slot />
+	</body>
+</html>

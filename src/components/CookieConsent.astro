@@ -1,0 +1,212 @@
+---
+/**
+ * Consent banner for DSGVO (DE) / revDSG (CH). Renders nothing when `categories` is
+ * empty — a site with only necessary cookies needs no banner, so don't add one by default.
+ *
+ * Gate third-party code behind a category; it only runs after consent:
+ *   <script type="text/plain" data-consent="analytics" src="https://…"></script>
+ *   <template data-consent="maps"><iframe src="https://…"></iframe></template>
+ * Listen for `consent:change` on window to react in your own scripts.
+ * Any element with `data-cookie-settings` (e.g. the Footer button) reopens the settings.
+ *
+ * "Reject" and "accept" are deliberately the same size and weight — required for valid consent.
+ * Bump `version` when categories change so everyone is asked again.
+ */
+
+interface Category {
+	/** Matches `data-consent` on gated scripts/templates. */
+	id: string;
+	label: string;
+	/** Which service, which provider, what for. */
+	description: string;
+}
+
+interface Props {
+	categories: Category[];
+	privacyHref: string;
+	version?: string;
+	labels?: Partial<typeof defaultLabels>;
+}
+
+const defaultLabels = {
+	title: "Cookies & externe Inhalte",
+	body: "Notwendige Cookies setzen wir immer. Weitere Dienste laden wir nur mit Ihrer Zustimmung — Sie können Ihre Wahl jederzeit im Footer ändern.",
+	privacyLink: "Datenschutzerklärung",
+	necessary: "Notwendig",
+	necessaryDescription: "Für den Betrieb der Website erforderlich, z. B. das Speichern dieser Auswahl.",
+	acceptAll: "Alle akzeptieren",
+	rejectAll: "Nur notwendige",
+	settings: "Einstellungen",
+	save: "Auswahl speichern",
+};
+
+const { categories, privacyHref, version = "1", labels: labelOverrides = {} } = Astro.props;
+const labels = { ...defaultLabels, ...labelOverrides };
+
+const button =
+	"inline-flex items-center justify-center rounded-full border border-ink px-4 py-2.5 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-ink hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+---
+
+{
+	categories.length > 0 && (
+		<div
+			data-cookie-consent
+			data-version={version}
+			hidden
+			role="dialog"
+			aria-modal="false"
+			aria-labelledby="cookie-consent-title"
+			class="fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100svh-1.5rem)] overflow-y-auto border border-ink bg-paper p-6 text-ink sm:inset-x-auto sm:start-5 sm:bottom-5 sm:w-[26rem] sm:p-7"
+		>
+			<h2 id="cookie-consent-title" class="font-display text-xl font-medium tracking-[-0.01em]">
+				{labels.title}
+			</h2>
+			<p class="mt-3 text-sm leading-relaxed text-ink/70">
+				{labels.body}{" "}
+				<a href={privacyHref} class="text-ink underline underline-offset-2">
+					{labels.privacyLink}
+				</a>
+			</p>
+
+			<fieldset data-cc-details hidden class="mt-5 space-y-4 border-t border-ink/15 pt-5">
+				<legend class="sr-only">{labels.settings}</legend>
+				<div class="flex gap-3">
+					<input id="cc-necessary" type="checkbox" checked disabled class="mt-1 size-4 shrink-0 accent-[var(--color-brand)]" />
+					<label for="cc-necessary" class="text-sm leading-snug">
+						<span class="block font-semibold">{labels.necessary}</span>
+						<span class="text-ink/65">{labels.necessaryDescription}</span>
+					</label>
+				</div>
+				{categories.map((category) => (
+					<div class="flex gap-3">
+						<input
+							id={`cc-${category.id}`}
+							type="checkbox"
+							value={category.id}
+							data-cc-category
+							class="mt-1 size-4 shrink-0 cursor-pointer accent-[var(--color-brand)]"
+						/>
+						<label for={`cc-${category.id}`} class="cursor-pointer text-sm leading-snug">
+							<span class="block font-semibold">{category.label}</span>
+							<span class="text-ink/65">{category.description}</span>
+						</label>
+					</div>
+				))}
+			</fieldset>
+
+			<div class="mt-6 grid grid-cols-2 gap-3">
+				<button type="button" data-cc-reject class={button}>
+					{labels.rejectAll}
+				</button>
+				<button type="button" data-cc-accept class={button}>
+					{labels.acceptAll}
+				</button>
+				<button type="button" data-cc-save hidden class:list={[button, "col-span-2"]}>
+					{labels.save}
+				</button>
+				<button
+					type="button"
+					data-cc-toggle
+					aria-expanded="false"
+					class="col-span-2 justify-self-start text-sm text-ink/70 underline underline-offset-2 hover:text-ink"
+				>
+					{labels.settings}
+				</button>
+			</div>
+		</div>
+	)
+}
+
+<script>
+	const STORAGE_KEY = "zt-consent";
+	const root = document.querySelector<HTMLElement>("[data-cookie-consent]");
+
+	if (root) {
+		const version = root.dataset.version ?? "1";
+		const boxes = Array.from(root.querySelectorAll<HTMLInputElement>("[data-cc-category]"));
+		const allCategories = boxes.map((box) => box.value);
+		const details = root.querySelector<HTMLElement>("[data-cc-details]")!;
+		const saveButton = root.querySelector<HTMLElement>("[data-cc-save]")!;
+		const toggleButton = root.querySelector<HTMLElement>("[data-cc-toggle]")!;
+		let granted: string[] = [];
+
+		const read = (): string[] | null => {
+			try {
+				const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+				return stored?.v === version && Array.isArray(stored.granted) ? stored.granted : null;
+			} catch {
+				return null;
+			}
+		};
+
+		const write = (categories: string[]) => {
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: version, granted: categories, ts: new Date().toISOString() }));
+			} catch {
+				// Storage blocked: consent holds for this page view only.
+			}
+		};
+
+		// Swap gated placeholders for live code. Activated elements are replaced, so this is idempotent.
+		const activate = (categories: string[]) => {
+			document.querySelectorAll<HTMLScriptElement>('script[type="text/plain"][data-consent]').forEach((placeholder) => {
+				if (!categories.includes(placeholder.dataset.consent ?? "")) return;
+				const script = document.createElement("script");
+				for (const attr of Array.from(placeholder.attributes)) {
+					if (attr.name !== "type" && attr.name !== "data-consent") script.setAttribute(attr.name, attr.value);
+				}
+				script.text = placeholder.text;
+				placeholder.replaceWith(script);
+			});
+			document.querySelectorAll<HTMLTemplateElement>("template[data-consent]").forEach((template) => {
+				if (categories.includes(template.dataset.consent ?? "")) template.replaceWith(template.content.cloneNode(true));
+			});
+			window.dispatchEvent(new CustomEvent("consent:change", { detail: { granted: categories } }));
+		};
+
+		const showDetails = (show: boolean) => {
+			details.hidden = !show;
+			saveButton.hidden = !show;
+			toggleButton.hidden = show;
+			toggleButton.setAttribute("aria-expanded", String(show));
+		};
+
+		const open = (withDetails: boolean) => {
+			boxes.forEach((box) => (box.checked = granted.includes(box.value)));
+			showDetails(withDetails);
+			root.hidden = false;
+		};
+
+		const decide = (categories: string[]) => {
+			const revoked = granted.some((c) => !categories.includes(c));
+			write(categories);
+			root.hidden = true;
+			// Scripts that already ran can't be unloaded — reload so the withdrawal takes effect.
+			if (revoked) return location.reload();
+			granted = categories;
+			activate(categories);
+		};
+
+		root.querySelector("[data-cc-accept]")!.addEventListener("click", () => decide(allCategories));
+		root.querySelector("[data-cc-reject]")!.addEventListener("click", () => decide([]));
+		saveButton.addEventListener("click", () => decide(boxes.filter((b) => b.checked).map((b) => b.value)));
+		toggleButton.addEventListener("click", () => {
+			showDetails(true);
+			boxes[0]?.focus();
+		});
+
+		document.addEventListener("click", (event) => {
+			if (!(event.target as Element).closest("[data-cookie-settings]")) return;
+			open(true);
+			boxes[0]?.focus();
+		});
+
+		const stored = read();
+		if (stored) {
+			granted = stored.filter((c) => allCategories.includes(c));
+			activate(granted);
+		} else {
+			open(false);
+		}
+	}
+</script>

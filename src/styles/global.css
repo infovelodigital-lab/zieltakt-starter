@@ -1,0 +1,39 @@
+@import "tailwindcss";
+@import "./fonts.css";
+
+@theme {
+	--font-display: "Fraunces", "IBM Plex Sans Arabic", ui-serif, Georgia, serif;
+	--font-sans: "Instrument Sans", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+
+	/* Per-client brand colours — override these, not individual components. */
+	--color-ink: #16181d;
+	--color-paper: #faf8f4;
+	--color-brand: #1f4d3a;
+	--color-brand-ink: #ffffff;
+}
+
+@layer base {
+	html {
+		font-family: var(--font-sans);
+		/* Anchor targets clear the sticky Navbar. */
+		scroll-padding-top: 5.5rem;
+		-webkit-text-size-adjust: 100%;
+		text-rendering: optimizeLegibility;
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-display);
+	}
+}
+
+/* Hatched fill for [CLIENT PHOTO NEEDED] boxes, so they can't be mistaken for a finished design. */
+@utility hatch {
+	background-color: color-mix(in srgb, var(--color-ink) 6%, transparent);
+	background-image: repeating-linear-gradient(
+		-45deg,
+		transparent 0 14px,
+		color-mix(in srgb, var(--color-ink) 7%, transparent) 14px 15px
+	);
+}

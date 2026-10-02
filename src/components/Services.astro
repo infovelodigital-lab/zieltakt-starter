@@ -1,0 +1,218 @@
+---
+/**
+ * Services: the first service gets a featured split (photo bleeding off the start
+ * edge — the opposite side from the Hero), the rest follow as a tight, ruled row of
+ * numbered columns. Deliberately not a card grid.
+ *
+ * All text comes in through props (fed from src/content/business.yaml).
+ */
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Service {
+	title: string;
+	/** One or two sentences: what's done, for whom. */
+	summary: string;
+	/** Featured service only: what's included — concrete line items. */
+	includes?: string[];
+	/** e.g. "ab CHF 180", "Festpreis ab € 2'400" */
+	price?: string;
+	/** e.g. "1–2 Tage", "Termin innert 48 h" */
+	duration?: string;
+	href?: string;
+	/** Featured service only. */
+	image?: ImageMetadata;
+	imageAlt?: string;
+	imageBrief?: string;
+}
+
+interface Props {
+	id?: string;
+	eyebrow?: string;
+	heading: string;
+	intro?: string;
+	services: Service[];
+	/** Link text for each service. */
+	moreLabel?: string;
+	/** Labels for the price/duration facts on the featured service. */
+	priceLabel?: string;
+	durationLabel?: string;
+}
+
+const {
+	id = "leistungen",
+	eyebrow,
+	heading,
+	intro,
+	services,
+	moreLabel = "Mehr erfahren",
+	priceLabel = "Preis",
+	durationLabel = "Dauer",
+} = Astro.props;
+
+const [featured, ...rest] = services;
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// Static class names so Tailwind can see them.
+const restCols = ["", "lg:grid-cols-1", "lg:grid-cols-2", "lg:grid-cols-3", "lg:grid-cols-4"][Math.min(rest.length, 4)];
+---
+
+<section id={id} aria-labelledby={`${id}-heading`} class="py-24 sm:py-32 lg:py-40">
+	<header class="mx-auto grid max-w-7xl gap-6 px-5 sm:px-8 lg:grid-cols-12 lg:items-end lg:gap-8">
+		<div class="lg:col-span-7">
+			{eyebrow && <p class="mb-5 text-sm font-semibold tracking-[0.14em] text-brand uppercase">{eyebrow}</p>}
+			<h2 id={`${id}-heading`} class="font-display text-[clamp(2.25rem,3vw+1.25rem,4rem)] leading-[1.02] font-medium tracking-[-0.02em] text-balance text-ink">
+				{heading}
+			</h2>
+		</div>
+		{intro && <p class="max-w-md text-lg leading-relaxed text-pretty text-ink/70 lg:col-span-4 lg:col-start-9">{intro}</p>}
+	</header>
+
+	{
+		featured && (
+			<article class="featured-grid mt-16 lg:mt-24">
+				<div class="featured-media relative aspect-[4/3] overflow-hidden rounded-ee-[2.5rem] lg:aspect-auto lg:min-h-[34rem]">
+					{featured.image ? (
+						<Image
+							src={featured.image}
+							alt={featured.imageAlt ?? ""}
+							widths={[640, 960, 1280, 1600]}
+							sizes="(min-width: 64rem) 60vw, 100vw"
+							class="absolute inset-0 size-full object-cover"
+						/>
+					) : (
+						<div class="hatch absolute inset-0 flex flex-col items-end gap-2 p-8 text-end text-ink/60 sm:p-10">
+							<p class="font-mono text-sm font-semibold tracking-wide text-ink/80">[CLIENT PHOTO NEEDED]</p>
+							{featured.imageBrief && <p class="max-w-xs text-sm leading-relaxed">{featured.imageBrief}</p>}
+						</div>
+					)}
+				</div>
+
+				<div class="featured-copy flex flex-col justify-center pt-10 lg:py-8 lg:ps-16 xl:ps-20">
+					<p class="font-display text-lg text-ink/40" aria-hidden="true">{pad(1)}</p>
+					<h3 class="mt-3 font-display text-[clamp(1.875rem,1.5vw+1.25rem,2.75rem)] leading-[1.08] font-medium tracking-[-0.015em] text-ink">
+						{featured.title}
+					</h3>
+					<p class="mt-5 text-lg leading-relaxed text-pretty text-ink/70">{featured.summary}</p>
+
+					{featured.includes && featured.includes.length > 0 && (
+						<ul class="mt-8 grid gap-x-8 gap-y-3 border-t border-ink/15 pt-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+							{featured.includes.map((item) => (
+								<li class="flex gap-3 text-[0.9375rem] leading-snug text-ink/80">
+									<span aria-hidden="true" class="mt-[0.6em] h-px w-3 shrink-0 bg-brand" />
+									{item}
+								</li>
+							))}
+						</ul>
+					)}
+
+					{(featured.price || featured.duration) && (
+						<dl class="mt-8 flex flex-wrap gap-x-10 gap-y-5">
+							{featured.price && (
+								<div class="flex flex-col-reverse">
+									<dt class="mt-1 text-sm text-ink/55">{priceLabel}</dt>
+									<dd class="font-display text-xl font-medium tracking-tight text-ink sm:text-2xl">
+										<bdi>{featured.price}</bdi>
+									</dd>
+								</div>
+							)}
+							{featured.duration && (
+								<div class="flex flex-col-reverse">
+									<dt class="mt-1 text-sm text-ink/55">{durationLabel}</dt>
+									<dd class="font-display text-xl font-medium tracking-tight text-ink sm:text-2xl">
+										<bdi>{featured.duration}</bdi>
+									</dd>
+								</div>
+							)}
+						</dl>
+					)}
+
+					{featured.href && (
+						<a
+							href={featured.href}
+							class="mt-10 inline-flex w-fit items-center rounded-full bg-brand px-6 py-3.5 font-semibold text-brand-ink transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+						>
+							{moreLabel}
+							<span class="sr-only">: {featured.title}</span>
+						</a>
+					)}
+				</div>
+			</article>
+		)
+	}
+
+	{
+		rest.length > 0 && (
+			<ol class:list={["mx-auto mt-20 grid max-w-7xl gap-x-10 gap-y-12 px-5 sm:grid-cols-2 sm:px-8 lg:mt-28", restCols]} start="2">
+				{rest.map((service, i) => (
+					<li class="flex flex-col border-t border-ink pt-5">
+						<p class="font-display text-base text-ink/40" aria-hidden="true">{pad(i + 2)}</p>
+						<h3 class="mt-4 font-display text-2xl leading-tight font-medium tracking-[-0.01em] text-ink">{service.title}</h3>
+						<p class="mt-3 leading-relaxed text-pretty text-ink/70">{service.summary}</p>
+						{(service.price || service.duration) && (
+							<p class="mt-5 text-sm font-medium text-ink">
+								{service.price && <bdi>{service.price}</bdi>}
+								{service.price && service.duration && <span class="mx-2 text-ink/30" aria-hidden="true">·</span>}
+								{service.duration && <bdi class="text-ink/60">{service.duration}</bdi>}
+							</p>
+						)}
+						{service.href && (
+							<a
+								href={service.href}
+								class="mt-auto w-fit pt-6 text-[0.9375rem] font-semibold text-ink underline decoration-ink/25 decoration-1 underline-offset-[6px] transition-colors hover:decoration-ink"
+							>
+								{moreLabel}
+								<span class="sr-only">: {service.title}</span>
+							</a>
+						)}
+					</li>
+				))}
+			</ol>
+		)
+	}
+</section>
+
+<style>
+	/* Same edge maths as the Hero, mirrored: the photo bleeds off the start edge. */
+	.featured-grid {
+		--gutter: 1.25rem;
+		--edge: max(var(--gutter), (100% - 80rem) / 2 + var(--gutter));
+		display: grid;
+		grid-template-columns: [full-start] var(--edge) [content-start] minmax(0, 1fr) [content-end] var(--edge) [full-end];
+	}
+
+	.featured-media {
+		grid-column: full-start / content-end;
+	}
+
+	.featured-copy {
+		grid-column: content;
+	}
+
+	@media (min-width: 40rem) {
+		.featured-grid {
+			--gutter: 2rem;
+		}
+	}
+
+	@media (min-width: 64rem) {
+		.featured-grid {
+			grid-template-columns:
+				[full-start] var(--edge)
+				[content-start] minmax(0, 7fr)
+				[split] minmax(0, 5fr)
+				[content-end] var(--edge)
+				[full-end];
+		}
+
+		.featured-media {
+			grid-column: full-start / split;
+			grid-row: 1;
+		}
+
+		.featured-copy {
+			grid-column: split / content-end;
+			grid-row: 1;
+		}
+	}
+</style>

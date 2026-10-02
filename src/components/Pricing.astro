@@ -1,0 +1,82 @@
+---
+/**
+ * Pricing as a printed price list, not tier cards: grouped rows with dotted leaders,
+ * next to a sticky intro column (lg+). Local trades price per job, so this fits
+ * better than SaaS-style packages.
+ *
+ * All text comes in through props (fed from src/content/business.yaml).
+ */
+
+interface PriceItem {
+	name: string;
+	/** What's included or what it depends on. */
+	detail?: string;
+	/** e.g. "CHF 290", "ab € 1'200", "nach Aufwand" */
+	price: string;
+}
+
+interface PriceGroup {
+	title?: string;
+	items: PriceItem[];
+}
+
+interface Props {
+	id?: string;
+	eyebrow?: string;
+	heading: string;
+	intro?: string;
+	groups: PriceGroup[];
+	/** e.g. "Alle Preise in CHF inkl. 8,1 % MwSt. Anfahrt Zürich-Nord inklusive." */
+	note?: string;
+	cta?: { label: string; href: string };
+}
+
+const { id = "preise", eyebrow, heading, intro, groups, note, cta } = Astro.props;
+---
+
+<section id={id} aria-labelledby={`${id}-heading`} class="py-24 sm:py-32 lg:py-40">
+	<div class="mx-auto grid max-w-7xl gap-14 px-5 sm:px-8 lg:grid-cols-12 lg:gap-8">
+		<div class="lg:sticky lg:top-28 lg:col-span-4 lg:self-start">
+			{eyebrow && <p class="mb-5 text-sm font-semibold tracking-[0.14em] text-brand uppercase">{eyebrow}</p>}
+			<h2 id={`${id}-heading`} class="font-display text-[clamp(2.25rem,2.5vw+1.25rem,3.5rem)] leading-[1.04] font-medium tracking-[-0.02em] text-balance text-ink">
+				{heading}
+			</h2>
+			{intro && <p class="mt-6 text-lg leading-relaxed text-pretty text-ink/70">{intro}</p>}
+			{note && <p class="mt-8 border-s-2 border-brand ps-4 text-sm leading-relaxed text-ink/65">{note}</p>}
+			{
+				cta && (
+					<a
+						href={cta.href}
+						class="mt-10 inline-flex items-center rounded-full bg-brand px-6 py-3.5 font-semibold text-brand-ink transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+					>
+						{cta.label}
+					</a>
+				)
+			}
+		</div>
+
+		<div class="space-y-16 lg:col-span-7 lg:col-start-6">
+			{
+				groups.map((group) => (
+					<div>
+						{group.title && <h3 class="border-b border-ink pb-4 font-display text-2xl font-medium tracking-[-0.01em] text-ink">{group.title}</h3>}
+						<ul class="mt-2">
+							{group.items.map((item) => (
+								<li class="py-4">
+									<div class="flex items-baseline gap-4">
+										<span class="text-lg font-medium text-ink">{item.name}</span>
+										<span aria-hidden="true" class="min-w-8 flex-1 -translate-y-[0.3em] border-b border-dotted border-ink/35" />
+										<span class="shrink-0 font-display text-xl font-medium tracking-tight text-ink tabular-nums">
+											<bdi>{item.price}</bdi>
+										</span>
+									</div>
+									{item.detail && <p class="mt-1 max-w-md text-[0.9375rem] leading-relaxed text-ink/60">{item.detail}</p>}
+								</li>
+							))}
+						</ul>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</section>

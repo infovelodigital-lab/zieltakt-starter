@@ -1,0 +1,98 @@
+---
+/**
+ * FAQ as a full-width list of large questions, using native <details> (works without
+ * JS). Optional aside next to the heading for "question not listed? call us".
+ * Emits FAQPage JSON-LD from the same items, so the markup and schema can't drift.
+ *
+ * All text comes in through props (fed from src/content/business.yaml).
+ */
+
+interface Faq {
+	question: string;
+	/** Plain text. Separate paragraphs with a blank line. */
+	answer: string;
+}
+
+interface Props {
+	id?: string;
+	eyebrow?: string;
+	heading: string;
+	items: Faq[];
+	aside?: { text: string; cta: { label: string; href: string } };
+	/** Set false if the page already outputs FAQPage schema elsewhere. */
+	schema?: boolean;
+}
+
+const { id = "faq", eyebrow, heading, items, aside, schema = true } = Astro.props;
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const paragraphs = (text: string) => text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+const jsonLd = schema
+	? JSON.stringify({
+			"@context": "https://schema.org",
+			"@type": "FAQPage",
+			mainEntity: items.map((item) => ({
+				"@type": "Question",
+				name: item.question,
+				acceptedAnswer: { "@type": "Answer", text: item.answer },
+			})),
+		}).replace(/</g, "\\u003c")
+	: undefined;
+---
+
+<section id={id} aria-labelledby={`${id}-heading`} class="py-24 sm:py-32 lg:py-40">
+	<div class="mx-auto max-w-7xl px-5 sm:px-8">
+		<div class="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
+			<div class="lg:col-span-7">
+				{eyebrow && <p class="mb-5 text-sm font-semibold tracking-[0.14em] text-brand uppercase">{eyebrow}</p>}
+				<h2 id={`${id}-heading`} class="font-display text-[clamp(2.25rem,3vw+1.25rem,4rem)] leading-[1.02] font-medium tracking-[-0.02em] text-balance text-ink">
+					{heading}
+				</h2>
+			</div>
+			{
+				aside && (
+					<div class="border-s-2 border-brand ps-6 lg:col-span-4 lg:col-start-9">
+						<p class="leading-relaxed text-ink/70">{aside.text}</p>
+						<a
+							href={aside.cta.href}
+							class="mt-2 inline-block font-display text-2xl font-medium text-ink underline decoration-ink/25 decoration-1 underline-offset-[6px] transition-colors hover:decoration-ink"
+						>
+							<bdi>{aside.cta.label}</bdi>
+						</a>
+					</div>
+				)
+			}
+		</div>
+
+		<div class="mt-16 border-t border-ink lg:mt-20">
+			{
+				items.map((item, i) => (
+					<details class="group border-b border-ink/15">
+						<summary class="flex cursor-pointer list-none items-start gap-6 py-7 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand sm:py-8 [&::-webkit-details-marker]:hidden">
+							<span aria-hidden="true" class="hidden w-10 shrink-0 pt-[0.35em] font-display text-base text-ink/40 sm:block">
+								{pad(i + 1)}
+							</span>
+							<span class="flex-1 font-display text-[clamp(1.25rem,0.9vw+1rem,1.875rem)] leading-snug font-medium tracking-[-0.01em] text-ink">
+								{item.question}
+							</span>
+							<span aria-hidden="true" class="relative mt-[0.55em] size-4 shrink-0 text-ink">
+								<span class="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-current" />
+								<span class="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-current transition-transform duration-200 group-open:scale-y-0" />
+							</span>
+						</summary>
+						<div class="pb-9 sm:ps-16">
+							<div class="max-w-3xl space-y-4 text-lg leading-relaxed text-pretty text-ink/70">
+								{paragraphs(item.answer).map((p) => (
+									<p>{p}</p>
+								))}
+							</div>
+						</div>
+					</details>
+				))
+			}
+		</div>
+	</div>
+
+	{jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}
+</section>

@@ -1,0 +1,256 @@
+---
+/**
+ * Contact: a brand-coloured panel with phone, address and opening hours bleeds off
+ * the start edge; the enquiry form sits beside it.
+ *
+ * The form posts to `formAction` — a form service or a single on-demand route
+ * (`export const prerender = false`), never by switching the whole site to SSR.
+ * Includes a honeypot field (`website`) that the handler should reject when filled.
+ *
+ * All text comes in through props (fed from src/content/business.yaml); UI labels
+ * default to German and can be overridden via `labels`.
+ */
+
+interface Props {
+	id?: string;
+	eyebrow?: string;
+	heading: string;
+	intro?: string;
+	phone: { display: string; href: string };
+	email?: string;
+	address?: { street: string; postalCode: string; city: string };
+	/** Link to Google/Apple Maps — a link, not an embed, so no consent is needed. */
+	mapsUrl?: string;
+	hours?: { days: string; hours: string }[];
+	/** e.g. "24h-Notdienst auch an Feiertagen" */
+	note?: string;
+	formAction: string;
+	/** Options for the "what's it about" select. Omit to hide the field. */
+	services?: string[];
+	privacyHref: string;
+	labels?: Partial<typeof defaultLabels>;
+}
+
+const defaultLabels = {
+	phone: "Telefon",
+	email: "E-Mail",
+	address: "Adresse",
+	route: "Route planen",
+	hours: "Öffnungszeiten",
+	formHeading: "Anfrage senden",
+	name: "Name",
+	contactPhone: "Telefon",
+	contactEmail: "E-Mail",
+	service: "Worum geht es?",
+	servicePlaceholder: "Bitte wählen",
+	message: "Ihre Nachricht",
+	optional: "optional",
+	/** `{link}` is replaced with the privacy policy link. */
+	privacy: "Ich habe die {link} gelesen und bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden.",
+	privacyLink: "Datenschutzerklärung",
+	submit: "Anfrage senden",
+};
+
+const {
+	id = "kontakt",
+	eyebrow,
+	heading,
+	intro,
+	phone,
+	email,
+	address,
+	mapsUrl,
+	hours = [],
+	note,
+	formAction,
+	services = [],
+	privacyHref,
+	labels: labelOverrides = {},
+} = Astro.props;
+
+const labels = { ...defaultLabels, ...labelOverrides };
+const [privacyBefore, privacyAfter = ""] = labels.privacy.split("{link}");
+
+const field =
+	"mt-2 block w-full border-0 border-b border-ink/30 bg-transparent px-0 py-3 text-lg text-ink transition-colors placeholder:text-ink/35 focus:border-brand focus:shadow-[0_1px_0_0_var(--color-brand)] focus:outline-none";
+const label = "text-sm font-medium text-ink/70";
+---
+
+<section id={id} aria-labelledby={`${id}-heading`} class="contact-grid py-24 sm:py-32 lg:py-40">
+	<div class="contact-panel bg-brand py-14 text-brand-ink sm:py-16 lg:rounded-ee-[2.5rem] lg:py-20">
+		{eyebrow && <p class="mb-5 text-sm font-semibold tracking-[0.14em] uppercase opacity-70">{eyebrow}</p>}
+		<h2 id={`${id}-heading`} class="font-display text-[clamp(2.25rem,2.5vw+1.25rem,3.5rem)] leading-[1.04] font-medium tracking-[-0.02em] text-balance">
+			{heading}
+		</h2>
+		{intro && <p class="mt-6 max-w-md text-lg leading-relaxed text-pretty opacity-80">{intro}</p>}
+
+		<dl class="mt-12 space-y-8">
+			<div>
+				<dt class="text-sm opacity-70">{labels.phone}</dt>
+				<dd class="mt-1">
+					<a href={phone.href} class="font-display text-[clamp(2rem,1.5vw+1.5rem,2.75rem)] leading-none font-medium tracking-tight underline-offset-[6px] hover:underline">
+						<bdi>{phone.display}</bdi>
+					</a>
+				</dd>
+			</div>
+			{
+				email && (
+					<div>
+						<dt class="text-sm opacity-70">{labels.email}</dt>
+						<dd class="mt-1 text-lg">
+							<a href={`mailto:${email}`} class="underline decoration-brand-ink/40 underline-offset-4 hover:decoration-brand-ink">
+								<bdi>{email}</bdi>
+							</a>
+						</dd>
+					</div>
+				)
+			}
+			{
+				address && (
+					<div>
+						<dt class="text-sm opacity-70">{labels.address}</dt>
+						<dd class="mt-1 text-lg leading-relaxed">
+							<address class="not-italic">
+								{address.street}
+								<br />
+								<bdi>{address.postalCode} {address.city}</bdi>
+							</address>
+							{mapsUrl && (
+								<a href={mapsUrl} rel="noopener" target="_blank" class="mt-2 inline-block text-[0.9375rem] font-semibold underline decoration-brand-ink/40 underline-offset-4 hover:decoration-brand-ink">
+									{labels.route}
+								</a>
+							)}
+						</dd>
+					</div>
+				)
+			}
+		</dl>
+
+		{
+			hours.length > 0 && (
+				<div class="mt-12 border-t border-brand-ink/20 pt-8">
+					<h3 class="font-sans text-sm opacity-70">{labels.hours}</h3>
+					<dl class="mt-3 max-w-sm">
+						{hours.map((row) => (
+							<div class="flex justify-between gap-6 py-1.5">
+								<dt>{row.days}</dt>
+								<dd class="tabular-nums">
+									<bdi>{row.hours}</bdi>
+								</dd>
+							</div>
+						))}
+					</dl>
+				</div>
+			)
+		}
+
+		{note && <p class="mt-8 inline-block bg-brand-ink/10 px-4 py-2.5 text-[0.9375rem] font-semibold">{note}</p>}
+	</div>
+
+	<div class="contact-form pt-16 lg:pt-20 lg:ps-16 xl:ps-24">
+		<h3 class="font-display text-3xl font-medium tracking-[-0.01em] text-ink">{labels.formHeading}</h3>
+
+		<form action={formAction} method="post" class="mt-10 grid gap-x-8 gap-y-9 sm:grid-cols-2">
+			<div class="sm:col-span-2">
+				<label for={`${id}-name`} class={label}>{labels.name}</label>
+				<input id={`${id}-name`} name="name" type="text" autocomplete="name" required class={field} />
+			</div>
+			<div>
+				<label for={`${id}-phone`} class={label}>{labels.contactPhone} <span class="text-ink/45">({labels.optional})</span></label>
+				<input id={`${id}-phone`} name="phone" type="tel" autocomplete="tel" class={field} />
+			</div>
+			<div>
+				<label for={`${id}-email`} class={label}>{labels.contactEmail}</label>
+				<input id={`${id}-email`} name="email" type="email" autocomplete="email" required class={field} />
+			</div>
+			{
+				services.length > 0 && (
+					<div class="sm:col-span-2">
+						<label for={`${id}-service`} class={label}>{labels.service}</label>
+						<select id={`${id}-service`} name="service" class:list={[field, "cursor-pointer"]}>
+							<option value="">{labels.servicePlaceholder}</option>
+							{services.map((s) => (
+								<option value={s}>{s}</option>
+							))}
+						</select>
+					</div>
+				)
+			}
+			<div class="sm:col-span-2">
+				<label for={`${id}-message`} class={label}>{labels.message}</label>
+				<textarea id={`${id}-message`} name="message" rows="4" required class:list={[field, "resize-y"]}></textarea>
+			</div>
+
+			<!-- Honeypot: hidden from people, filled by bots. -->
+			<div aria-hidden="true" class="sr-only">
+				<label for={`${id}-website`}>Website</label>
+				<input id={`${id}-website`} name="website" type="text" tabindex="-1" autocomplete="off" />
+			</div>
+
+			<div class="flex gap-3 sm:col-span-2">
+				<input id={`${id}-privacy`} name="privacy" type="checkbox" required class="mt-1 size-4 shrink-0 accent-[var(--color-brand)]" />
+				<label for={`${id}-privacy`} class="text-[0.9375rem] leading-relaxed text-ink/70">
+					{privacyBefore}<a href={privacyHref} class="text-ink underline underline-offset-2">{labels.privacyLink}</a>{privacyAfter}
+				</label>
+			</div>
+
+			<div class="sm:col-span-2">
+				<button
+					type="submit"
+					class="inline-flex items-center rounded-full bg-ink px-8 py-4 font-semibold text-paper transition hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+				>
+					{labels.submit}
+				</button>
+			</div>
+		</form>
+	</div>
+</section>
+
+<style>
+	/* Same edge maths as Hero/Services: the panel bleeds off the start edge,
+	   its content stays aligned with the container. */
+	.contact-grid {
+		--gutter: 1.25rem;
+		--edge: max(var(--gutter), (100% - 80rem) / 2 + var(--gutter));
+		display: grid;
+		grid-template-columns: [full-start] var(--edge) [content-start] minmax(0, 1fr) [content-end] var(--edge) [full-end];
+	}
+
+	.contact-panel {
+		grid-column: full;
+		padding-inline: var(--edge);
+	}
+
+	.contact-form {
+		grid-column: content;
+	}
+
+	@media (min-width: 40rem) {
+		.contact-grid {
+			--gutter: 2rem;
+		}
+	}
+
+	@media (min-width: 64rem) {
+		.contact-grid {
+			grid-template-columns:
+				[full-start] var(--edge)
+				[content-start] minmax(0, 5fr)
+				[split] minmax(0, 7fr)
+				[content-end] var(--edge)
+				[full-end];
+			align-items: start;
+		}
+
+		.contact-panel {
+			grid-column: full-start / split;
+			grid-row: 1;
+			padding-inline-end: clamp(3rem, 5vw, 5rem);
+		}
+
+		.contact-form {
+			grid-column: split / content-end;
+			grid-row: 1;
+		}
+	}
+</style>

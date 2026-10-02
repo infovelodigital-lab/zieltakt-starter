@@ -1,0 +1,118 @@
+---
+/**
+ * Testimonials on a dark band: one large pull-quote, a rating tile that overlaps
+ * the band's top edge (lg+), and up to three shorter quotes beside it.
+ *
+ * Only real, attributable reviews — first name + initial and context (service,
+ * area, month) are enough. Never invent quotes to fill the section; if the client
+ * has none yet, leave the section out.
+ */
+
+interface Testimonial {
+	quote: string;
+	/** e.g. "Sandra M." */
+	name: string;
+	/** e.g. "Badsanierung, Seebach · März 2025" */
+	context?: string;
+}
+
+interface Rating {
+	/** e.g. "4,9" */
+	value: string;
+	/** e.g. "5" */
+	scale?: string;
+	/** e.g. "212 Bewertungen auf Google" */
+	label: string;
+	/** Link to the public review profile. */
+	href?: string;
+}
+
+interface Props {
+	id?: string;
+	/** Rendered as the section's (small) h2. */
+	heading: string;
+	testimonials: Testimonial[];
+	rating?: Rating;
+}
+
+const { id = "stimmen", heading, testimonials, rating } = Astro.props;
+const [lead, ...more] = testimonials;
+const RatingTag = rating?.href ? "a" : "div";
+---
+
+<section id={id} aria-labelledby={`${id}-heading`} class="relative bg-ink text-paper">
+	<div class="mx-auto grid max-w-7xl gap-16 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-12 lg:gap-8 lg:py-36">
+		<div class="lg:col-span-8 lg:pe-12">
+			<h2 id={`${id}-heading`} class="font-sans text-sm font-semibold tracking-[0.14em] text-paper/60 uppercase">{heading}</h2>
+
+			{
+				lead && (
+					<figure class="mt-10 lg:mt-14">
+						<blockquote class="quote font-display text-[clamp(1.75rem,2vw+1.1rem,3rem)] leading-[1.18] font-normal tracking-[-0.015em] text-pretty">
+							<p>{lead.quote}</p>
+						</blockquote>
+						<figcaption class="mt-10 flex items-center gap-5">
+							<span aria-hidden="true" class="h-px w-12 bg-paper/40" />
+							<span>
+								<span class="block font-semibold">{lead.name}</span>
+								{lead.context && <span class="mt-0.5 block text-sm text-paper/60">{lead.context}</span>}
+							</span>
+						</figcaption>
+					</figure>
+				)
+			}
+		</div>
+
+		<div class="lg:col-span-4">
+			{
+				rating && (
+					<RatingTag
+						href={rating.href}
+						class="group relative z-10 block bg-brand p-8 text-brand-ink lg:-mt-60 lg:p-10"
+						{...(rating.href ? { rel: "noopener", target: "_blank" } : {})}
+					>
+						<p class="flex items-baseline gap-2 font-display">
+							<span class="text-7xl leading-none font-medium tracking-tight">
+								<bdi>{rating.value}</bdi>
+							</span>
+							{rating.scale && <span class="text-2xl opacity-60">/ <bdi>{rating.scale}</bdi></span>}
+						</p>
+						<p class:list={["mt-4 text-[0.9375rem]", rating.href && "underline decoration-brand-ink/40 underline-offset-4 group-hover:decoration-brand-ink"]}>
+							{rating.label}
+						</p>
+					</RatingTag>
+				)
+			}
+
+			{
+				more.length > 0 && (
+					<ul class="mt-12 divide-y divide-paper/15 border-y border-paper/15">
+						{more.slice(0, 3).map((t) => (
+							<li class="py-7">
+								<figure>
+									<blockquote class="quote leading-relaxed text-pretty text-paper/85">
+										<p>{t.quote}</p>
+									</blockquote>
+									<figcaption class="mt-4 text-sm">
+										<span class="font-semibold">{t.name}</span>
+										{t.context && <span class="text-paper/55"> · {t.context}</span>}
+									</figcaption>
+								</figure>
+							</li>
+						))}
+					</ul>
+				)
+			}
+		</div>
+	</div>
+</section>
+
+<style>
+	/* Language-appropriate quotation marks („…“, «…», "…") from the page's lang. */
+	.quote p::before {
+		content: open-quote;
+	}
+	.quote p::after {
+		content: close-quote;
+	}
+</style>

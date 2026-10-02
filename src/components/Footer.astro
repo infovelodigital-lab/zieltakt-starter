@@ -1,0 +1,178 @@
+---
+/**
+ * Dark footer: claim, contact and navigation in an asymmetric row, a legal bar,
+ * and an oversized wordmark cropped by the bottom edge.
+ *
+ * Impressum and Datenschutz links are legally required in DE and CH — pass them in `legal`.
+ * All text comes in through props (fed from src/content/business.yaml).
+ */
+
+interface Link {
+	label: string;
+	href: string;
+}
+
+interface Props {
+	brandName: string;
+	/** One or two sentences: what, where, since when. */
+	claim?: string;
+	address?: { street: string; postalCode: string; city: string };
+	phone?: { display: string; href: string };
+	email?: string;
+	/** e.g. "Mo–Fr 7–17 Uhr · Notdienst 24/7" */
+	hoursSummary?: string;
+	links?: Link[];
+	/** Impressum, Datenschutz, AGB … */
+	legal: Link[];
+	/** Text links only — no logo icons. */
+	social?: Link[];
+	/** Renders a button that reopens CookieConsent. Pass only when CookieConsent is on the page. */
+	cookieSettingsLabel?: string;
+	/** e.g. { label: "Website: ZielTakt", href: "https://zieltakt.de" } */
+	credit?: Link;
+	labels?: { contact?: string; navigation?: string; social?: string };
+}
+
+const {
+	brandName,
+	claim,
+	address,
+	phone,
+	email,
+	hoursSummary,
+	links = [],
+	legal,
+	social = [],
+	cookieSettingsLabel,
+	credit,
+	labels = {},
+} = Astro.props;
+
+const { contact = "Kontakt", navigation = "Navigation", social: socialLabel = "Social" } = labels;
+
+// Rendered at build time — the static site is rebuilt on every content change anyway.
+const year = new Date().getFullYear();
+
+// Scale the wordmark to the name's length so it spans roughly the full width.
+const wordmarkSize = `min(13rem, ${(195 / Math.max(brandName.length, 6)).toFixed(2)}vw)`;
+
+const linkClass = "underline-offset-4 transition-colors hover:text-paper hover:underline";
+---
+
+<footer class="overflow-hidden bg-ink text-paper/70">
+	<div class="mx-auto grid max-w-7xl gap-14 px-5 pt-20 sm:px-8 sm:pt-28 lg:grid-cols-12 lg:gap-8">
+		<div class="lg:col-span-5">
+			<p class="font-display text-2xl font-semibold tracking-tight text-paper">{brandName}</p>
+			{claim && <p class="mt-5 max-w-sm text-lg leading-relaxed text-pretty">{claim}</p>}
+		</div>
+
+		<div class="lg:col-span-3 lg:col-start-7">
+			<h2 class="font-sans text-sm font-semibold tracking-[0.14em] text-paper/45 uppercase">{contact}</h2>
+			<div class="mt-5 space-y-4 leading-relaxed">
+				{
+					address && (
+						<address class="not-italic">
+							{address.street}
+							<br />
+							<bdi>{address.postalCode} {address.city}</bdi>
+						</address>
+					)
+				}
+				{
+					(phone || email) && (
+						<p>
+							{phone && (
+								<a href={phone.href} class:list={[linkClass, "text-paper"]}>
+									<bdi>{phone.display}</bdi>
+								</a>
+							)}
+							{phone && email && <br />}
+							{email && (
+								<a href={`mailto:${email}`} class={linkClass}>
+									<bdi>{email}</bdi>
+								</a>
+							)}
+						</p>
+					)
+				}
+				{hoursSummary && <p>{hoursSummary}</p>}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-2 gap-8 lg:col-span-3 lg:col-start-10">
+			{
+				links.length > 0 && (
+					<nav aria-labelledby="footer-nav-heading">
+						<h2 id="footer-nav-heading" class="font-sans text-sm font-semibold tracking-[0.14em] text-paper/45 uppercase">
+							{navigation}
+						</h2>
+						<ul class="mt-5 space-y-2.5">
+							{links.map((link) => (
+								<li>
+									<a href={link.href} class={linkClass}>
+										{link.label}
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				)
+			}
+			{
+				social.length > 0 && (
+					<div>
+						<h2 class="font-sans text-sm font-semibold tracking-[0.14em] text-paper/45 uppercase">{socialLabel}</h2>
+						<ul class="mt-5 space-y-2.5">
+							{social.map((link) => (
+								<li>
+									<a href={link.href} rel="noopener" target="_blank" class={linkClass}>
+										{link.label}
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				)
+			}
+		</div>
+
+		<div class="flex flex-col gap-4 border-t border-paper/15 py-6 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between lg:col-span-12 lg:mt-12">
+			<p>© {year} {brandName}</p>
+			<ul class="flex flex-wrap gap-x-6 gap-y-2">
+				{
+					legal.map((link) => (
+						<li>
+							<a href={link.href} class={linkClass}>
+								{link.label}
+							</a>
+						</li>
+					))
+				}
+				{
+					cookieSettingsLabel && (
+						<li>
+							<button type="button" data-cookie-settings class:list={[linkClass, "cursor-pointer"]}>
+								{cookieSettingsLabel}
+							</button>
+						</li>
+					)
+				}
+			</ul>
+			{
+				credit && (
+					<a href={credit.href} rel="noopener" class:list={[linkClass, "text-paper/45"]}>
+						{credit.label}
+					</a>
+				)
+			}
+		</div>
+	</div>
+
+	<p
+		aria-hidden="true"
+		class="mt-6 -mb-[0.14em] px-3 font-display leading-[0.85] font-semibold tracking-[-0.04em] whitespace-nowrap text-paper select-none"
+		style={`font-size: ${wordmarkSize}`}
+	>
+		{brandName}
+	</p>
+</footer>

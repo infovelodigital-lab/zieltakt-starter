@@ -1,0 +1,87 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Navbar from "../components/Navbar.astro";
+import Hero from "../components/Hero.astro";
+import Services from "../components/Services.astro";
+import Testimonials from "../components/Testimonials.astro";
+import Pricing from "../components/Pricing.astro";
+import FAQ from "../components/FAQ.astro";
+import Contact from "../components/Contact.astro";
+import Footer from "../components/Footer.astro";
+import CookieConsent from "../components/CookieConsent.astro";
+import { localBusinessSchema } from "../lib/schema";
+
+const entry = await getEntry("site", "business");
+if (!entry) throw new Error("src/content/business.yaml needs a top-level `business:` key.");
+const business = entry.data;
+
+const consentCategories = business.consent?.categories ?? [];
+const hours = business.openingHours.map((h) => ({ days: h.days, hours: `${h.opens}–${h.closes}` }));
+---
+
+<BaseLayout
+	title={business.seo.title}
+	description={business.seo.description}
+	siteName={business.name}
+	lang={business.lang}
+	jsonLd={localBusinessSchema(business, Astro.site)}
+>
+	<Navbar brandName={business.name} links={business.nav.links} cta={business.nav.cta} />
+
+	<main>
+		<Hero {...business.hero} />
+
+		<Services
+			eyebrow={business.services.eyebrow}
+			heading={business.services.heading}
+			intro={business.services.intro}
+			services={business.services.items}
+		/>
+
+		{
+			business.testimonials && (
+				<Testimonials
+					heading={business.testimonials.heading}
+					rating={business.testimonials.rating}
+					testimonials={business.testimonials.items}
+				/>
+			)
+		}
+
+		{business.pricing && <Pricing {...business.pricing} />}
+
+		{business.faq && <FAQ {...business.faq} />}
+
+		<Contact
+			{...business.contact}
+			services={business.contact.services ?? business.services.items.map((s) => s.title)}
+			phone={business.phone}
+			email={business.email}
+			address={business.address}
+			mapsUrl={business.mapsUrl}
+			hours={hours}
+			privacyHref={business.privacyHref}
+		/>
+	</main>
+
+	<Footer
+		brandName={business.name}
+		claim={business.footer.claim}
+		address={business.address}
+		phone={business.phone}
+		email={business.email}
+		hoursSummary={business.footer.hoursSummary}
+		links={business.nav.links}
+		legal={business.legal}
+		social={business.social}
+		credit={business.footer.credit}
+		cookieSettingsLabel={consentCategories.length > 0 ? business.consent?.settingsLabel : undefined}
+	/>
+
+	<CookieConsent
+		categories={consentCategories}
+		privacyHref={business.privacyHref}
+		version={business.consent?.version}
+	/>
+</BaseLayout>
